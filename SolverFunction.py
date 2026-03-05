@@ -122,7 +122,19 @@ def solve_quantity(f, bracket=None, x0=None, **kwargs):
     if bracket is not None:
         if isinstance(bracket, u.Quantity):
             bracket = bracket.to(unk_unit).value
-        sol = scipy.optimize.brentq(g, *bracket)
+        a, b = bracket
+        fa = g(a)
+        fb = g(b)
+
+        if fa == 0:
+            return a * unk_unit
+        if fb == 0:
+            return b * unk_unit
+
+        xtol = np.finfo(float).tiny
+        rtol = 8 * np.finfo(float).eps
+
+        sol = scipy.optimize.brentq(g, a, b, xtol=xtol, rtol=rtol, maxiter=200)
     else:
         if x0 is None:
             x0 = 1.0
@@ -131,3 +143,6 @@ def solve_quantity(f, bracket=None, x0=None, **kwargs):
         sol = scipy.optimize.fsolve(g, x0)[0]
 
     return sol * unk_unit
+
+def simplify(quantity):
+    return quantity.decompose()
